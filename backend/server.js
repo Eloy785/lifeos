@@ -1,24 +1,37 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
+
 app.use(cors());
+app.use(express.json());
 
 const PORT = 3000;
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+);
 
 app.get("/", (req, res) => {
     res.send("LifeOS backend is running!");
 });
 
-app.get("/api/metrics", (req, res) => {
-    const metrics = {
-        weight: 83,
-        steps: 8421,
-        sleep: 7.5,
-        study: 3
-    };
+app.get("/api/metrics", async (req, res) => {
+    const { data, error } = await supabase
+        .from("daily_metrics")
+        .select("*")
+        .order("date", { ascending: false });
 
-    res.json(metrics);
+    if (error) {
+        console.error(error);
+        return res.status(500).json({ error: error.message });
+    }
+
+    res.json(data);
 });
 
 app.listen(PORT, () => {
