@@ -32,8 +32,62 @@ app.get("/api/metrics", async (req, res) => {
     }
 
     res.json(data);
-});
+}); 
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+});
+
+app.post("/api/metrics", async (req, res) => {
+    const {
+        date,
+        weight_kg,
+        steps,
+        sleep_hours,
+        study_hours
+    } = req.body;
+
+    if (!date) {
+        return res.status(400).json({
+            error: "Date is required"
+        });
+    }
+
+    const newMetric = {
+        date,
+        weight_kg:
+            weight_kg === "" || weight_kg == null
+                ? null
+                : Number(weight_kg),
+
+        steps:
+            steps === "" || steps == null
+                ? null
+                : Number(steps),
+
+        sleep_hours:
+            sleep_hours === "" || sleep_hours == null
+                ? null
+                : Number(sleep_hours),
+
+        study_hours:
+            study_hours === "" || study_hours == null
+                ? null
+                : Number(study_hours)
+    };
+
+    const { data, error } = await supabase
+        .from("daily_metrics")
+        .insert([newMetric])
+        .select();
+
+    if (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+
+    res.status(201).json(data);
 });
