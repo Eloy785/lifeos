@@ -78,7 +78,9 @@ app.post("/api/metrics", async (req, res) => {
 
     const { data, error } = await supabase
         .from("daily_metrics")
-        .insert([newMetric])
+        .upsert([newMetric], {
+            onConflict: "date"
+        })
         .select();
 
     if (error) {

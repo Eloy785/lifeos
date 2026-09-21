@@ -1,4 +1,62 @@
 import { useEffect, useState } from "react";
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer
+} from "recharts";
+
+import "./App.css";
+
+function MetricCard({ title, value, unit }) {
+    return (
+        <div className="metric-card">
+            <p className="metric-title">{title}</p>
+
+            <h3>
+                {value ?? "--"}
+                <span>{unit}</span>
+            </h3>
+        </div>
+    );
+}
+
+function TrendChart({ title, data, dataKey, unit }) {
+    return (
+        <div className="chart-card">
+            <h2>{title}</h2>
+
+            {data.length > 0 ? (
+                <div className="chart-container">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={data}>
+                            <CartesianGrid strokeDasharray="3 3" />
+
+                            <XAxis dataKey="date" />
+
+                            <YAxis />
+
+                            <Tooltip />
+
+                            <Line
+                                type="monotone"
+                                dataKey={dataKey}
+                                name={title}
+                                unit={unit}
+                                strokeWidth={3}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            ) : (
+                <p>No data available.</p>
+            )}
+        </div>
+    );
+}
 
 function App() {
     const [metrics, setMetrics] = useState([]);
@@ -80,94 +138,215 @@ function App() {
 
     const latest = metrics[0];
 
+    const chartData = [...metrics]
+        .reverse()
+        .map((metric) => ({
+            ...metric,
+
+            weight_kg:
+                metric.weight_kg === null
+                    ? null
+                    : Number(metric.weight_kg),
+
+            steps:
+                metric.steps === null
+                    ? null
+                    : Number(metric.steps),
+
+            sleep_hours:
+                metric.sleep_hours === null
+                    ? null
+                    : Number(metric.sleep_hours),
+
+            study_hours:
+                metric.study_hours === null
+                    ? null
+                    : Number(metric.study_hours)
+        }));
+
     return (
-        <div>
-            <h1>LifeOS</h1>
-            <p>Your personal analytics dashboard.</p>
-
-            <hr />
-
-            <h2>Add Daily Metrics</h2>
-
-            <form onSubmit={handleSubmit}>
+        <div className="app">
+            <header className="header">
                 <div>
-                    <label>Date: </label>
-                    <input
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleChange}
-                        required
+                    <h1>LifeOS</h1>
+                    <p>Your personal analytics dashboard.</p>
+                </div>
+            </header>
+
+            <main>
+                <section className="metrics-grid">
+                    <MetricCard
+                        title="Weight"
+                        value={latest?.weight_kg}
+                        unit=" kg"
                     />
-                </div>
 
-                <div>
-                    <label>Weight (kg): </label>
-                    <input
-                        type="number"
-                        step="0.1"
-                        name="weight_kg"
-                        value={formData.weight_kg}
-                        onChange={handleChange}
+                    <MetricCard
+                        title="Steps"
+                        value={latest?.steps}
+                        unit=""
                     />
-                </div>
 
-                <div>
-                    <label>Steps: </label>
-                    <input
-                        type="number"
-                        name="steps"
-                        value={formData.steps}
-                        onChange={handleChange}
+                    <MetricCard
+                        title="Sleep"
+                        value={latest?.sleep_hours}
+                        unit=" hrs"
                     />
-                </div>
 
-                <div>
-                    <label>Sleep (hours): </label>
-                    <input
-                        type="number"
-                        step="0.1"
-                        name="sleep_hours"
-                        value={formData.sleep_hours}
-                        onChange={handleChange}
+                    <MetricCard
+                        title="Study"
+                        value={latest?.study_hours}
+                        unit=" hrs"
                     />
-                </div>
+                </section>
 
-                <div>
-                    <label>Study (hours): </label>
-                    <input
-                        type="number"
-                        step="0.1"
-                        name="study_hours"
-                        value={formData.study_hours}
-                        onChange={handleChange}
+                <section className="form-card">
+                    <h2>Add Daily Metrics</h2>
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-grid">
+                            <div>
+                                <label>Date</label>
+
+                                <input
+                                    type="date"
+                                    name="date"
+                                    value={formData.date}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label>Weight (kg)</label>
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="weight_kg"
+                                    value={formData.weight_kg}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            <div>
+                                <label>Steps</label>
+
+                                <input
+                                    type="number"
+                                    name="steps"
+                                    value={formData.steps}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            <div>
+                                <label>Sleep (hours)</label>
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="sleep_hours"
+                                    value={formData.sleep_hours}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            <div>
+                                <label>Study (hours)</label>
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="study_hours"
+                                    value={formData.study_hours}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        <button type="submit">
+                            Save Daily Metrics
+                        </button>
+                    </form>
+
+                    {message && (
+                        <p className="message">
+                            {message}
+                        </p>
+                    )}
+                </section>
+
+                <section className="charts-grid">
+                    <TrendChart
+                        title="Weight Trend"
+                        data={chartData}
+                        dataKey="weight_kg"
+                        unit=" kg"
                     />
-                </div>
 
-                <br />
+                    <TrendChart
+                        title="Steps Trend"
+                        data={chartData}
+                        dataKey="steps"
+                        unit=" steps"
+                    />
 
-                <button type="submit">
-                    Save Daily Metrics
-                </button>
-            </form>
+                    <TrendChart
+                        title="Sleep Trend"
+                        data={chartData}
+                        dataKey="sleep_hours"
+                        unit=" hrs"
+                    />
 
-            {message && <p>{message}</p>}
+                    <TrendChart
+                        title="Study Trend"
+                        data={chartData}
+                        dataKey="study_hours"
+                        unit=" hrs"
+                    />
+                </section>
 
-            <hr />
+                <section className="history-card">
+                    <h2>History</h2>
 
-            <h2>Latest Entry</h2>
+                    {metrics.length > 0 ? (
+                        <div className="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Weight</th>
+                                        <th>Steps</th>
+                                        <th>Sleep</th>
+                                        <th>Study</th>
+                                    </tr>
+                                </thead>
 
-            {latest ? (
-                <div>
-                    <p>Date: {latest.date}</p>
-                    <p>Weight: {latest.weight_kg} kg</p>
-                    <p>Steps: {latest.steps}</p>
-                    <p>Sleep: {latest.sleep_hours} hours</p>
-                    <p>Study: {latest.study_hours} hours</p>
-                </div>
-            ) : (
-                <p>No metrics found.</p>
-            )}
+                                <tbody>
+                                    {metrics.map((metric) => (
+                                        <tr key={metric.id}>
+                                            <td>{metric.date}</td>
+                                            <td>
+                                                {metric.weight_kg} kg
+                                            </td>
+                                            <td>{metric.steps}</td>
+                                            <td>
+                                                {metric.sleep_hours} hrs
+                                            </td>
+                                            <td>
+                                                {metric.study_hours} hrs
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p>No history yet.</p>
+                    )}
+                </section>
+            </main>
         </div>
     );
 }
